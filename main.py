@@ -517,10 +517,6 @@ def change_password():
     pass
     return render_template('change_password.html')
 
-# في main.py
-@app.route('/historical')
-def historical():
-    return render_template('dashboard.html')  # مؤقتاً نوجه إلى dashboard
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -575,6 +571,13 @@ def dashboard():
         return render_template('dashboard.html', syntax=syntax)
     
     return render_template('dashboard.html')
+
+
+# في main.py
+@app.route('/historical')
+def historical():
+    return render_template('dashboard.html')  # مؤقتاً نوجه إلى dashboard
+
 
 @app.route('/signals', methods=['GET', 'POST'])
 def signals():
@@ -705,6 +708,13 @@ def process_value(value, account_number):
         return f'NO_VALUE_FOUND_{account_number}'
 
 
+@app.route('/add_api', methods=['GET', 'POST'])
+def add_api():
+    return render_template('add_api.html')
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    return render_template('settings.html')
 
 @app.route('/add_metaapi_<int:account_number>', methods=['GET', 'POST'])
 def add_metaapi(account_number):
