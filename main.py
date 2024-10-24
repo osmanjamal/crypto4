@@ -1,5 +1,5 @@
 import json
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for,flash
 import os
 import importlib
 import concurrent.futures as cf
@@ -11,8 +11,9 @@ import pandas as pd
 from functions import *
 
 #import MetaTrader5 as mt5  # تغيير طريقة الاستيراد
+from init_files import initialize_files
 
-
+    
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '123fdsgcsfgxgfg1514cgcd45'
 
@@ -762,5 +763,7 @@ def add_api_telegram(account_number):
     return redirect(url_for('api_settings'))
 
 
+
 if __name__ == '__main__':
+    initialize_files()  # تهيئة الملفات المطلوبة
     app.run(host='0.0.0.0', port=80, debug=True)

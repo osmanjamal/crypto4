@@ -1,3 +1,0 @@
-# إنشاء الملف مع بيانات فارغة
-with open('trades.json', 'w') as f:
-    json.dump([], f)

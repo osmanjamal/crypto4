@@ -1,56 +1,156 @@
-<!DOCTYPE html>
-<html>
-   <head>
-      <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-      <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-      <title>Risk Settings</title>
-   </head>
-   <body>
-      <center>
-         <ul class="navbar">
-            <li><a href="/">Home</a></li>
-            <li><a href="/signals">Signal Logs</a></li>
-            <li><a class="active" href="/max_loss_settings">Risk Settings</a></li>
-            <li><a href="/api_settings">Add / Edit API</a></li>
-        <div style="display: flex; justify-content: flex-end;">
-          <li><a class="logout" href="/logout" >Logout</a></li>
-        </div>
-         </ul>
-      </center>
+<!-- templates/settings.html -->
+{% extends "base.html" %}
 
-      <div class="trans-box-header ">
-         <center>
-            <h1>Max Loss Settings</h1>
-         </center>
-      </div>
-      <div class="trans-box-body-dashboard">
-         <div style="display: flex; width: 100%;justify-content: center;">
-         <div class="card" style="width:50%">
-          <div class="card-inline" style="">
-            <form action="/max_loss_settings" method="POST">
-               <div >
-                  <label  class="trans-box-body" style="border-radius:5px;text-align:center;"for="max_loss">Max Loss </label>
-                  <input type="text" name="max_loss" id="max_loss" placeholder="Enter Max Consecutive Loss Value">
-                  <input type="submit" value="Save">
-               </div></div>
-            </form>
-            
-              <div class="card-inline">
-              <form action="/reset_max_loss" method="POST">
-                 <div>
-                    <label  class="trans-box-body" style="border-radius:5px;text-align:center;"for="max_loss_cap">Reset Consecutive Loss Series </label>
-                    <!--<input type="text" name="max_loss_cap" id="max_loss_cap" placeholder="Enter Max Consecutive Loss Value">-->
-                    <input type="submit" value="Reset">
-                 </div>
-              </form>
-           </div>
-           <div class="code-box-info">
-               <h4>
-               Max Loss Capping : {{ max_loss_value | safe }}</h3>
-            
-         </div>
-         </div>
-         
+{% block title %}الإعدادات - منصة التداول{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- الحد الأقصى للخسارة -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">الحد الأقصى للخسارة</h5>
+            <button type="button" class="btn btn-danger btn-sm" onclick="resetMaxLoss()">
+                <i class="fas fa-redo me-2"></i>إعادة تعيين
+            </button>
         </div>
-   </body>
-</html>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('max_loss_settings') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">الحد الأقصى للخسارة</label>
+                        <div class="input-group">
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="max_loss" 
+                                   value="{{ max_loss_value }}"
+                                   step="0.01"
+                                   required>
+                            <span class="input-group-text">$</span>
+                        </div>
+                    </div>
+                    <div class="col-md-auto">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>حفظ
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- الإشعارات -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">إعدادات الإشعارات</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications">
+                        <label class="form-check-label">إشعارات البريد الإلكتروني</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="telegramNotifications">
+                        <label class="form-check-label">إشعارات التيليجرام</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="tradeNotifications">
+                        <label class="form-check-label">إشعارات التداول</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="signalNotifications">
+                        <label class="form-check-label">إشعارات الإشارات</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- روابط سريعة -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">روابط سريعة</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <a href="{{ url_for('add_api') }}" class="card h-100 bg-light text-decoration-none">
+                        <div class="card-body">
+                            <h6 class="mb-2 text-primary">
+                                <i class="fas fa-key me-2"></i>إعدادات API
+                            </h6>
+                            <p class="text-muted mb-0">تعديل إعدادات MT5 والتيليجرام</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a href="#" onclick="return false;" class="card h-100 bg-light text-decoration-none">
+                        <div class="card-body">
+                            <h6 class="mb-2 text-primary">
+                                <i class="fas fa-lock me-2"></i>تغيير كلمة المرور
+                            </h6>
+                            <p class="text-muted mb-0">تعديل كلمة المرور الخاصة بك</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function resetMaxLoss() {
+    if (confirm('هل أنت متأكد من إعادة تعيين الحد الأقصى للخسارة؟')) {
+        fetch("{{ url_for('reset_max_loss') }}", { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('حدث خطأ أثناء إعادة التعيين');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ في النظام');
+            });
+    }
+}
+
+// حفظ إعدادات الإشعارات
+document.querySelectorAll('.form-check-input').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const setting = this.id;
+        const value = this.checked;
+        
+        fetch('/api/settings/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                setting: setting,
+                value: value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert('تم حفظ الإعدادات', 'success');
+            } else {
+                showAlert('حدث خطأ في حفظ الإعدادات', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('حدث خطأ في النظام', 'danger');
+        });
+    });
+});
+</script>
+{% endblock %}
