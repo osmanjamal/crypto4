@@ -1,0 +1,195 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>{% block title %}منصة التداول{% endblock %}</title>
+   
+   <!-- المكتبات الأساسية -->
+   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css" rel="stylesheet">
+   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+   
+   <!-- مكتبة التأثيرات الحركية -->
+   <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+   
+   <!-- التنسيقات المحلية -->
+   <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+   <link href="{{ url_for('static', filename='style.1.css') }}" rel="stylesheet">
+   
+   {% block styles %}{% endblock %}
+</head>
+<body>
+   <!-- القائمة العلوية -->
+   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+       <div class="container-fluid">
+           <a class="navbar-brand" href="{{ url_for('index') }}">
+               <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Logo" width="30" height="30" class="d-inline-block align-text-top me-2">
+               منصة التداول
+           </a>
+           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+               <span class="navbar-toggler-icon"></span>
+           </button>
+           
+           <div class="collapse navbar-collapse" id="navbarNav">
+               <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                   <li class="nav-item">
+                       <a class="nav-link" href="{{ url_for('index') }}">
+                           <i class="fas fa-home"></i> الرئيسية
+                       </a>
+                   </li>
+                   
+                   <!-- قائمة MT5 -->
+                   <li class="nav-item dropdown">
+                       <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                           <i class="fas fa-chart-line"></i> MT5
+                       </a>
+                       <ul class="dropdown-menu">
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('trades') }}">
+                                   <i class="fas fa-exchange-alt"></i> التداولات
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('signals') }}">
+                                   <i class="fas fa-bell"></i> الإشارات
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('trades') }}">
+                                   <i class="fas fa-history"></i> السجل
+                               </a>
+                           </li>
+                       </ul>
+                   </li>
+                   
+                   <!-- قائمة Binance -->
+                   <li class="nav-item dropdown">
+                       <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                           <i class="fab fa-bitcoin"></i> Binance
+                       </a>
+                       <ul class="dropdown-menu">
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('binance_dashboard') }}">
+                                   <i class="fas fa-tachometer-alt"></i> لوحة التحكم
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('binance_trade') }}">
+                                   <i class="fas fa-exchange-alt"></i> تداول
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('binance_orders') }}">
+                                   <i class="fas fa-list"></i> الأوامر
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('binance_history') }}">
+                                   <i class="fas fa-history"></i> السجل
+                               </a>
+                           </li>
+                       </ul>
+                   </li>
+               </ul>
+               
+               <!-- قائمة المستخدم -->
+               <ul class="navbar-nav">
+                   <li class="nav-item dropdown">
+                       <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                           <i class="fas fa-user"></i> الإعدادات
+                       </a>
+                       <ul class="dropdown-menu dropdown-menu-end">
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('api_settings') }}">
+                                   <i class="fas fa-key"></i> إعدادات API
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('binance_settings') }}">
+                                   <i class="fab fa-bitcoin"></i> إعدادات Binance
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('max_loss_settings') }}">
+                                   <i class="fas fa-cog"></i> الإعدادات العامة
+                               </a>
+                           </li>
+                           <li><hr class="dropdown-divider"></li>
+                           <li>
+                               <a class="dropdown-item" href="{{ url_for('change_password') }}">
+                                   <i class="fas fa-lock"></i> تغيير كلمة المرور
+                               </a>
+                           </li>
+                           <li>
+                               <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                   <i class="fas fa-sign-out-alt"></i> تسجيل خروج
+                               </a>
+                           </li>
+                       </ul>
+                   </li>
+               </ul>
+           </div>
+       </div>
+   </nav>
+
+   <!-- التنبيهات -->
+   <div class="container-fluid mt-3">
+       {% with messages = get_flashed_messages(with_categories=true) %}
+           {% if messages %}
+               {% for category, message in messages %}
+                   <div class="alert alert-{{ category }} alert-dismissible fade show">
+                       {{ message }}
+                       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                   </div>
+               {% endfor %}
+           {% endif %}
+       {% endwith %}
+   </div>
+
+   <!-- المحتوى الرئيسي -->
+   <main>
+       {% block content %}{% endblock %}
+   </main>
+
+   <!-- الفوتر -->
+   <footer class="footer mt-auto py-3 bg-light">
+       <div class="container text-center">
+           <span class="text-muted">جميع الحقوق محفوظة © {{ now.year }}</span>
+       </div>
+   </footer>
+
+   <!-- المكتبات JavaScript -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+   
+   <!-- وظائف JavaScript المشتركة -->
+   <script>
+       // تنسيق التاريخ
+       function formatDate(date) {
+           return new Date(date).toLocaleString('ar-SA');
+       }
+
+       // تنسيق الأرقام
+       function formatNumber(number, decimals = 8) {
+           return parseFloat(number).toFixed(decimals);
+       }
+
+       // عرض تنبيه
+       function showAlert(message, type = 'info') {
+           const alertDiv = document.createElement('div');
+           alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+           alertDiv.innerHTML = `
+               ${message}
+               <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+           `;
+           
+           document.querySelector('.container-fluid').insertAdjacentElement('afterbegin', alertDiv);
+           
+           setTimeout(() => alertDiv.remove(), 5000);
+       }
+   </script>
+   
+   {% block scripts %}{% endblock %}
+</body>
+</html>

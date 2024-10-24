@@ -1,0 +1,214 @@
+<!-- templates/binance/dashboard.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- ملخص الحساب -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">القيمة الإجمالية</h6>
+                    <h2 class="card-text">${{ "{:,.2f}".format(total_value) }}</h2>
+                    <small>تحديث: {{ account_info.updateTime|format_date }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">USDT المتاح</h6>
+                    <h2 class="card-text">
+                        ${{ "{:,.2f}".format(balances.get('USDT', {}).get('free', 0)) }}
+                    </h2>
+                    <small>متاح للتداول</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">الأصول المحجوزة</h6>
+                    <h2 class="card-text">
+                        ${{ "{:,.2f}".format(balances.get('USDT', {}).get('locked', 0)) }}
+                    </h2>
+                    <small>في أوامر معلقة</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">عدد الأصول</h6>
+                    <h2 class="card-text">{{ balances|length }}</h2>
+                    <small>عملات نشطة</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الأصول والمحفظة -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">المحفظة</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshBalances()">
+                            <i class="fas fa-sync"></i> تحديث
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="location.href='{{ url_for('binance_trade') }}'">
+                            <i class="fas fa-exchange-alt"></i> تداول
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>العملة</th>
+                                <th>المتاح</th>
+                                <th>محجوز</th>
+                                <th>السعر (USDT)</th>
+                                <th>القيمة</th>
+                                <th>التغير 24س</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asset, balance in balances.items() %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename='img/crypto/' + asset.lower() + '.png') }}" 
+                                             width="24" class="me-2" onerror="this.src='{{ url_for('static', filename='img/crypto/default.png') }}'">
+                                        {{ asset }}
+                                    </div>
+                                </td>
+                                <td>{{ "{:,.8f}".format(balance.free) }}</td>
+                                <td>{{ "{:,.8f}".format(balance.locked) }}</td>
+                                <td class="price-cell" data-symbol="{{ asset }}USDT">
+                                    <div class="placeholder-glow">
+                                        <span class="placeholder col-6"></span>
+                                    </div>
+                                </td>
+                                <td class="value-cell" data-asset="{{ asset }}">
+                                    <div class="placeholder-glow">
+                                        <span class="placeholder col-6"></span>
+                                    </div>
+                                </td>
+                                <td class="change-cell" data-symbol="{{ asset }}USDT">
+                                    <div class="placeholder-glow">
+                                        <span class="placeholder col-4"></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('binance_trade', symbol=asset+'USDT') }}" 
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </a>
+                                        <a href="{{ url_for('binance_history', symbol=asset+'USDT') }}" 
+                                           class="btn btn-outline-secondary">
+                                            <i class="fas fa-history"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- آخر التداولات -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">آخر التداولات</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for trade in recent_trades %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ trade.symbol }}</h6>
+                                <small class="text-muted">{{ trade.time|format_date }}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="{{ 'text-success' if trade.isBuyer else 'text-danger' }}">
+                                    {{ "{:,.8f}".format(trade.qty) }} @ {{ "{:,.2f}".format(trade.price) }}
+                                </div>
+                                <small class="text-muted">
+                                    ${{ "{:,.2f}".format(trade.qty * trade.price) }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تحديث الأسعار مباشرة
+    const ws = new WebSocket('wss://stream.binance.com:9443/ws');
+    const symbols = [...document.querySelectorAll('[data-symbol]')]
+        .map(el => el.dataset.symbol.toLowerCase());
+    
+    const subscribeMsg = {
+        method: 'SUBSCRIBE',
+        params: symbols.map(s => `${s}@ticker`),
+        id: 1
+    };
+    
+    ws.onopen = () => ws.send(JSON.stringify(subscribeMsg));
+    
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.s) {
+            updatePrice(data.s, data.c, data.p);
+        }
+    };
+
+    function updatePrice(symbol, price, change) {
+        const priceCell = document.querySelector(`[data-symbol="${symbol}"] .price`);
+        const changeCell = document.querySelector(`[data-symbol="${symbol}"] .change`);
+        const asset = symbol.replace('USDT', '');
+        const valueCell = document.querySelector(`[data-asset="${asset}"] .value`);
+        
+        if (priceCell) {
+            const oldPrice = parseFloat(priceCell.dataset.price || 0);
+            const newPrice = parseFloat(price);
+            
+            priceCell.textContent = parseFloat(price).toFixed(8);
+            priceCell.dataset.price = price;
+            priceCell.classList.remove('text-success', 'text-danger');
+            priceCell.classList.add(newPrice > oldPrice ? 'text-success' : 'text-danger');
+        }
+        
+        if (changeCell) {
+            const changeValue = parseFloat(change);
+            changeCell.textContent = `${changeValue > 0 ? '+' : ''}${changeValue.toFixed(2)}%`;
+            changeCell.classList.remove('text-success', 'text-danger');
+            changeCell.classList.add(changeValue > 0 ? 'text-success' : 'text-danger');
+        }
+        
+        if (valueCell) {
+            const quantity = parseFloat(valueCell.dataset.quantity || 0);
+            const value = quantity * parseFloat(price);
+            valueCell.textContent = `$${value.toFixed(2)}`;
+        }
+    }
+
+    function refreshBalances() {
+        location.reload();
+    }
+</script>
+{% endblock %}

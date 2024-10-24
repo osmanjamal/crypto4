@@ -1,0 +1,253 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - منصة التداول{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- شريط الأدوات -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form id="symbolForm" class="d-flex gap-2">
+                        <select class="form-select" name="symbol" required>
+                            <option value="">اختر العملة</option>
+                            <option value="BTCUSDT">BTC/USDT</option>
+                            <option value="ETHUSDT">ETH/USDT</option>
+                            <option value="BNBUSDT">BNB/USDT</option>
+                            <!-- يمكن إضافة المزيد من العملات -->
+                        </select>
+                        <input type="number" class="form-control" name="qty" placeholder="الكمية" required>
+                        <select class="form-select" name="alert_type" required>
+                            <option value="">نوع التنبيه</option>
+                            <option value="BUY">شراء</option>
+                            <option value="SELL">بيع</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> إضافة
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">الحد الأقصى للخسارة:</h6>
+                            <h4 class="mb-0" id="maxLossDisplay">
+                                ${{ max_loss_value if max_loss_value else '0.00' }}
+                            </h4>
+                        </div>
+                        <button class="btn btn-danger" onclick="resetMaxLoss()">
+                            <i class="fas fa-redo"></i> إعادة تعيين
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- القسم الرئيسي -->
+    <div class="row g-4">
+        <!-- بطاقات الإحصائيات -->
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">إجمالي التداولات</h6>
+                    <h2 class="card-text" id="totalTradesCount">0</h2>
+                    <small>اليوم</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">الصفقات الرابحة</h6>
+                    <h2 class="card-text" id="profitableTradesCount">0</h2>
+                    <small>نسبة النجاح: <span id="successRate">0%</span></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">الإشارات النشطة</h6>
+                    <h2 class="card-text" id="activeSignalsCount">0</h2>
+                    <small>قيد التنفيذ</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- المخطط البياني -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">أداء التداول</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary active" data-period="day">يوم</button>
+                        <button class="btn btn-outline-secondary" data-period="week">أسبوع</button>
+                        <button class="btn btn-outline-secondary" data-period="month">شهر</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="tradingChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- آخر الإشارات -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">آخر الإشارات</h5>
+                </div>
+                <div class="list-group list-group-flush" id="recentSignals">
+                    <!-- سيتم تحديثه بواسطة JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول التداولات -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">آخر التداولات</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الوقت</th>
+                                <th>العملة</th>
+                                <th>النوع</th>
+                                <th>السعر</th>
+                                <th>الكمية</th>
+                                <th>القيمة</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTrades">
+                            <!-- سيتم تحديثه بواسطة JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة syntax -->
+{% if syntax %}
+<div class="modal fade" id="syntaxModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Webhook Syntax</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre class="bg-light p-3 rounded">{{ syntax | safe }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // إعداد المخطط البياني
+    const ctx = document.getElementById('tradingChart').getContext('2d');
+    const tradingChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'الأداء',
+                data: [],
+                borderColor: '#2962ff',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // تحديث البيانات
+    async function updateDashboard() {
+        try {
+            const response = await fetch('/api/dashboard/data');
+            const data = await response.json();
+            
+            // تحديث الإحصائيات
+            updateStats(data.stats);
+            
+            // تحديث المخطط
+            updateChart(data.chart_data);
+            
+            // تحديث الإشارات
+            updateSignals(data.recent_signals);
+            
+            // تحديث التداولات
+            updateTrades(data.recent_trades);
+            
+        } catch (error) {
+            console.error('Error updating dashboard:', error);
+        }
+    }
+
+    // تحديث كل 30 ثانية
+    setInterval(updateDashboard, 30000);
+
+    // معالجة نموذج الإشارات
+    document.getElementById('symbolForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch("{{ url_for('index') }}", {
+                method: 'POST',
+                body: new FormData(this)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showAlert('تم إضافة الإشارة بنجاح', 'success');
+                this.reset();
+            } else {
+                showAlert(result.message, 'danger');
+            }
+        } catch (error) {
+            showAlert('حدث خطأ أثناء إضافة الإشارة', 'danger');
+        }
+    });
+
+    // إعادة تعيين الحد الأقصى للخسارة
+    async function resetMaxLoss() {
+        if (!confirm('هل أنت متأكد من إعادة تعيين الحد الأقصى للخسارة؟')) {
+            return;
+        }
+        
+        try {
+            await fetch("{{ url_for('reset_max_loss') }}", { method: 'POST' });
+            document.getElementById('maxLossDisplay').textContent = '$0.00';
+            showAlert('تم إعادة تعيين الحد الأقصى للخسارة', 'success');
+        } catch (error) {
+            showAlert('حدث خطأ أثناء إعادة التعيين', 'danger');
+        }
+    }
+
+    // عرض نافذة syntax
+    {% if syntax %}
+    new bootstrap.Modal(document.getElementById('syntaxModal')).show();
+    {% endif %}
+
+    // التحديث الأولي
+    updateDashboard();
+</script>
+{% endblock %}

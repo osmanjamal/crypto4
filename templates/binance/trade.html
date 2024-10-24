@@ -1,0 +1,282 @@
+<!-- templates/binance/trade.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- جانب التداول -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">تداول جديد</h5>
+                </div>
+                <div class="card-body">
+                    <form id="tradeForm" method="POST">
+                        <!-- اختيار العملة -->
+                        <div class="mb-3">
+                            <label class="form-label">الزوج</label>
+                            <select name="symbol" class="form-select" id="symbolSelect" required>
+                                {% for symbol, data in market_data.items() %}
+                                <option value="{{ symbol }}" data-price="{{ data.price }}">
+                                    {{ symbol }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- نوع الأمر -->
+                        <div class="mb-3">
+                            <label class="form-label">نوع الأمر</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="type" id="market" value="market" checked>
+                                <label class="btn btn-outline-primary" for="market">سوق</label>
+                                
+                                <input type="radio" class="btn-check" name="type" id="limit" value="limit">
+                                <label class="btn btn-outline-primary" for="limit">محدد</label>
+                            </div>
+                        </div>
+
+                        <!-- جانب التداول -->
+                        <div class="mb-3">
+                            <label class="form-label">جانب التداول</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="side" id="buy" value="buy" checked>
+                                <label class="btn btn-outline-success" for="buy">شراء</label>
+                                
+                                <input type="radio" class="btn-check" name="side" id="sell" value="sell">
+                                <label class="btn btn-outline-danger" for="sell">بيع</label>
+                            </div>
+                        </div>
+
+                        <!-- السعر -->
+                        <div class="mb-3" id="priceGroup" style="display: none;">
+                            <label class="form-label">السعر</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="price" id="priceInput" step="0.00000001">
+                                <span class="input-group-text">USDT</span>
+                            </div>
+                        </div>
+
+                        <!-- الكمية -->
+                        <div class="mb-3">
+                            <label class="form-label">الكمية</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="quantity" id="quantityInput" required step="0.00000001">
+                                <span class="input-group-text" id="quantitySymbol">BTC</span>
+                            </div>
+                            <!-- أزرار النسب -->
+                            <div class="btn-group w-100 mt-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm percentage-btn" data-value="25">25%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm percentage-btn" data-value="50">50%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm percentage-btn" data-value="75">75%</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm percentage-btn" data-value="100">100%</button>
+                            </div>
+                        </div>
+
+                        <!-- إجمالي القيمة -->
+                        <div class="mb-3">
+                            <label class="form-label">القيمة الإجمالية</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="totalValue" readonly>
+                                <span class="input-group-text">USDT</span>
+                            </div>
+                        </div>
+
+                        <!-- زر التنفيذ -->
+                        <button type="submit" class="btn btn-primary w-100" id="submitTrade">
+                            تنفيذ التداول
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- معلومات الرصيد -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">معلومات الرصيد</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>USDT المتاح:</span>
+                        <span id="usdtBalance">{{ "{:,.2f}".format(balances.get('USDT', {}).get('free', 0)) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>الرصيد المحدد:</span>
+                        <span id="selectedBalance">0.00000000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات السوق -->
+        <div class="col-md-8">
+            <div class="row g-3">
+                <!-- معلومات السعر -->
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <h6>آخر سعر</h6>
+                                    <h4 id="lastPrice" class="mb-0">0.00</h4>
+                                </div>
+                                <div class="col">
+                                    <h6>التغير 24س</h6>
+                                    <h4 id="priceChange" class="mb-0">0.00%</h4>
+                                </div>
+                                <div class="col">
+                                    <h6>أعلى سعر</h6>
+                                    <h4 id="highPrice" class="mb-0">0.00</h4>
+                                </div>
+                                <div class="col">
+                                    <h6>أدنى سعر</h6>
+                                    <h4 id="lowPrice" class="mb-0">0.00</h4>
+                                </div>
+                                <div class="col">
+                                    <h6>حجم التداول</h6>
+                                    <h4 id="volume" class="mb-0">0.00</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الرسم البياني -->
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">الرسم البياني</h5>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-secondary btn-sm" data-interval="1m">1د</button>
+                                <button class="btn btn-outline-secondary btn-sm" data-interval="5m">5د</button>
+                                <button class="btn btn-outline-secondary btn-sm active" data-interval="15m">15د</button>
+                                <button class="btn btn-outline-secondary btn-sm" data-interval="1h">1س</button>
+                                <button class="btn btn-outline-secondary btn-sm" data-interval="4h">4س</button>
+                                <button class="btn btn-outline-secondary btn-sm" data-interval="1d">يوم</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="tradingChart" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+    // كود JavaScript للتداول والرسم البياني
+    let chart;
+    let candleSeries;
+    const socket = new WebSocket('wss://stream.binance.com:9443/ws');
+
+    // تهيئة الرسم البياني
+    function initChart() {
+        chart = LightweightCharts.createChart(document.getElementById('tradingChart'), {
+            layout: {
+                backgroundColor: '#ffffff',
+                textColor: '#333',
+            },
+            grid: {
+                vertLines: { color: '#f0f0f0' },
+                horzLines: { color: '#f0f0f0' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: '#ddd',
+            },
+            timeScale: {
+                borderColor: '#ddd',
+            },
+        });
+
+        candleSeries = chart.addCandlestickSeries();
+    }
+
+    // تحديث معلومات السعر
+    function updatePriceInfo(data) {
+        document.getElementById('lastPrice').textContent = parseFloat(data.c).toFixed(8);
+        document.getElementById('priceChange').textContent = `${parseFloat(data.p).toFixed(2)}%`;
+        document.getElementById('highPrice').textContent = parseFloat(data.h).toFixed(8);
+        document.getElementById('lowPrice').textContent = parseFloat(data.l).toFixed(8);
+        document.getElementById('volume').textContent = parseFloat(data.v).toFixed(2);
+    }
+
+    // حساب القيمة الإجمالية
+    function calculateTotal() {
+        const quantity = parseFloat(document.getElementById('quantityInput').value) || 0;
+        const price = parseFloat(document.getElementById('priceInput').value) || 
+                     parseFloat(document.getElementById('lastPrice').textContent) || 0;
+        
+        const total = quantity * price;
+        document.getElementById('totalValue').value = total.toFixed(8);
+    }
+
+    // معالجة النموذج
+    document.getElementById('tradeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!confirm('هل أنت متأكد من تنفيذ هذا التداول؟')) {
+            return;
+        }
+
+        try {
+            const response = await fetch("{{ url_for('binance_trade') }}", {
+                method: 'POST',
+                body: new FormData(this)
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                alert('تم تنفيذ التداول بنجاح');
+                window.location.href = "{{ url_for('binance_orders') }}";
+            } else {
+                alert(`خطأ: ${result.message}`);
+            }
+        } catch (error) {
+            alert('حدث خطأ أثناء تنفيذ التداول');
+            console.error(error);
+        }
+    });
+
+    // تهيئة الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        initChart();
+        
+        // إعداد WebSocket
+        const currentSymbol = document.getElementById('symbolSelect').value;
+        socket.onopen = () => {
+            socket.send(JSON.stringify({
+                method: 'SUBSCRIBE',
+                params: [
+                    `${currentSymbol.toLowerCase()}@ticker`,
+                    `${currentSymbol.toLowerCase()}@kline_15m`
+                ],
+                id: 1
+            }));
+        };
+        
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.e === 'ticker') {
+                updatePriceInfo(data);
+            } else if (data.e === 'kline') {
+                candleSeries.update({
+                    time: data.k.t / 1000,
+                    open: parseFloat(data.k.o),
+                    high: parseFloat(data.k.h),
+                    low: parseFloat(data.k.l),
+                    close: parseFloat(data.k.c)
+                });
+            }
+        };
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,242 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}الصفحة الرئيسية - منصة التداول{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- صف البطاقات الإحصائية -->
+    <div class="row g-3 mb-4">
+        <!-- MT5 إحصائيات -->
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">تداولات MT5</h6>
+                    <h2 class="card-text" id="mt5Trades">0</h2>
+                    <small>اليوم</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">إشارات MT5</h6>
+                    <h2 class="card-text" id="mt5Signals">0</h2>
+                    <small>نشطة</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Binance إحصائيات -->
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">محفظة Binance</h6>
+                    <h2 class="card-text" id="binanceBalance">$0.00</h2>
+                    <small>القيمة الإجمالية</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">أوامر Binance</h6>
+                    <h2 class="card-text" id="binanceOrders">0</h2>
+                    <small>مفتوحة</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صف المخططات -->
+    <div class="row g-4">
+        <!-- MT5 آخر التداولات -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">MT5 - آخر التداولات</h5>
+                    <a href="{{ url_for('trades') }}" class="btn btn-sm btn-primary">
+                        عرض الكل
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>الوقت</th>
+                                <th>الزوج</th>
+                                <th>النوع</th>
+                                <th>السعر</th>
+                                <th>الكمية</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mt5TradesTable">
+                            <!-- سيتم تحديثه عبر JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Binance آخر التداولات -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Binance - آخر التداولات</h5>
+                    <a href="{{ url_for('binance_history') }}" class="btn btn-sm btn-primary">
+                        عرض الكل
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>الوقت</th>
+                                <th>الزوج</th>
+                                <th>النوع</th>
+                                <th>السعر</th>
+                                <th>الكمية</th>
+                            </tr>
+                        </thead>
+                        <tbody id="binanceTradesTable">
+                            <!-- سيتم تحديثه عبر JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- الإشارات النشطة -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">الإشارات النشطة</h5>
+                    <a href="{{ url_for('signals') }}" class="btn btn-sm btn-primary">
+                        عرض الكل
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>الوقت</th>
+                                <th>الزوج</th>
+                                <th>النوع</th>
+                                <th>سعر الدخول</th>
+                                <th>الهدف</th>
+                                <th>وقف الخسارة</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeSignalsTable">
+                            <!-- سيتم تحديثه عبر JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تحديث البيانات كل 30 ثانية
+    setInterval(updateDashboard, 30000);
+
+    // تحديث البيانات
+    async function updateDashboard() {
+        try {
+            // MT5 تحديث بيانات
+            const mt5Response = await fetch('/api/mt5/summary');
+            const mt5Data = await mt5Response.json();
+            updateMT5Data(mt5Data);
+
+            // Binance تحديث بيانات
+            const binanceResponse = await fetch('/api/binance/summary');
+            const binanceData = await binanceResponse.json();
+            updateBinanceData(binanceData);
+
+            // تحديث الإشارات
+            const signalsResponse = await fetch('/api/signals/active');
+            const signalsData = await signalsResponse.json();
+            updateSignalsData(signalsData);
+
+        } catch (error) {
+            console.error('Error updating dashboard:', error);
+        }
+    }
+
+    // MT5 تحديث بيانات
+    function updateMT5Data(data) {
+        document.getElementById('mt5Trades').textContent = data.trades_count;
+        document.getElementById('mt5Signals').textContent = data.signals_count;
+        
+        const tradesHtml = data.recent_trades.map(trade => `
+            <tr>
+                <td>${formatDate(trade.time)}</td>
+                <td>${trade.symbol}</td>
+                <td>
+                    <span class="badge bg-${trade.type === 'buy' ? 'success' : 'danger'}">
+                        ${trade.type === 'buy' ? 'شراء' : 'بيع'}
+                    </span>
+                </td>
+                <td>${formatNumber(trade.price)}</td>
+                <td>${formatNumber(trade.quantity)}</td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('mt5TradesTable').innerHTML = tradesHtml;
+    }
+
+    // Binance تحديث بيانات
+    function updateBinanceData(data) {
+        document.getElementById('binanceBalance').textContent = `$${formatNumber(data.total_balance, 2)}`;
+        document.getElementById('binanceOrders').textContent = data.open_orders_count;
+        
+        const tradesHtml = data.recent_trades.map(trade => `
+            <tr>
+                <td>${formatDate(trade.time)}</td>
+                <td>${trade.symbol}</td>
+                <td>
+                    <span class="badge bg-${trade.side === 'BUY' ? 'success' : 'danger'}">
+                        ${trade.side === 'BUY' ? 'شراء' : 'بيع'}
+                    </span>
+                </td>
+                <td>${formatNumber(trade.price)}</td>
+                <td>${formatNumber(trade.qty)}</td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('binanceTradesTable').innerHTML = tradesHtml;
+    }
+
+    // تحديث الإشارات
+    function updateSignalsData(signals) {
+        const signalsHtml = signals.map(signal => `
+            <tr>
+                <td>${formatDate(signal.time)}</td>
+                <td>${signal.symbol}</td>
+                <td>
+                    <span class="badge bg-${signal.type === 'buy' ? 'success' : 'danger'}">
+                        ${signal.type === 'buy' ? 'شراء' : 'بيع'}
+                    </span>
+                </td>
+                <td>${formatNumber(signal.entry_price)}</td>
+                <td>${formatNumber(signal.target_price)}</td>
+                <td>${formatNumber(signal.stop_loss)}</td>
+                <td>
+                    <span class="badge bg-primary">
+                        ${signal.status}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('activeSignalsTable').innerHTML = signalsHtml;
+    }
+
+    // التحديث الأولي
+    updateDashboard();
+</script>
+{% endblock %}

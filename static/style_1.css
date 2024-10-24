@@ -1,0 +1,291 @@
+/* static/css/style.1.css */
+
+/* تنسيقات متقدمة للتداول والرسوم البيانية */
+
+/* بطاقات التداول */
+.trading-card {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.trading-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><path d="M0,50 L25,40 L50,60 L75,30 L100,45" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>');
+  opacity: 0.1;
+}
+
+/* مؤشرات الأسعار */
+.price-up {
+  animation: priceUp 0.5s ease-out;
+  color: var(--success-color);
+}
+
+.price-down {
+  animation: priceDown 0.5s ease-out;
+  color: var(--danger-color);
+}
+
+@keyframes priceUp {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes priceDown {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* جداول التداول */
+.trade-table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.trade-table tr {
+  background: linear-gradient(90deg, 
+      rgba(255,255,255,0.05) 0%, 
+      rgba(255,255,255,0.1) 100%
+  );
+  transition: transform 0.3s ease;
+}
+
+.trade-table tr:hover {
+  transform: scale(1.01);
+}
+
+.trade-table td:first-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.trade-table td:last-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+/* مخطط التداول */
+.chart-container {
+  position: relative;
+  height: 400px;
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+}
+
+.chart-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 5px;
+  border-radius: var(--border-radius);
+}
+
+.chart-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 1000;
+}
+
+/* أزرار التداول */
+.trade-button {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(45deg, #2962ff, #1565c0);
+  border: none;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.trade-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #1565c0, #2962ff);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.trade-button:hover::before {
+  opacity: 1;
+}
+
+/* محفظة التداول */
+.portfolio-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.portfolio-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-widget {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-widget:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* نموذج التداول */
+.trade-form {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+}
+
+.trade-form label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.trade-form .input-group {
+  margin-bottom: 1.5rem;
+}
+
+.trade-form .input-group-text {
+  background: transparent;
+  border-color: var(--border-color);
+}
+
+/* شريط الأسعار المتحرك */
+.price-ticker {
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 10px 0;
+  background: var(--bg-dark);
+}
+
+.ticker-item {
+  display: inline-block;
+  padding: 0 20px;
+  animation: ticker 30s linear infinite;
+}
+
+@keyframes ticker {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* لوحة التحليلات */
+.analytics-panel {
+  background: #fff;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, #f6f8fd 0%, #f1f4f9 100%);
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1rem 0;
+  color: var(--primary-color);
+}
+
+/* تأثيرات Loading */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* نافذة تفاصيل التداول */
+.trade-details-modal .modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.trade-details-modal .modal-header {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* التنبيهات المتقدمة */
+.floating-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 300px;
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* تخصيص السمة الداكنة */
+[data-theme="dark"] {
+  --bg-light: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --border-color: #2d2d2d;
+}
+
+[data-theme="dark"] .card {
+  background: #2d2d2d;
+  color: white;
+}
+
+[data-theme="dark"] .table {
+  color: white;
+}
+
+[data-theme="dark"] .modal-content {
+  background: #1a1a1a;
+  color: white;
+}

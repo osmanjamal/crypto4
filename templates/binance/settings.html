@@ -1,0 +1,74 @@
+<!-- templates/binance/settings.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">إعدادات Binance</h5>
+        </div>
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">API Key</label>
+                    <input type="text" 
+                           name="api_key" 
+                           class="form-control" 
+                           value="{{ '************' if api_data.binance_key else '' }}"
+                           required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">API Secret</label>
+                    <input type="password" 
+                           name="api_secret" 
+                           class="form-control" 
+                           value="{{ '************' if api_data.binance_secret else '' }}"
+                           required>
+                </div>
+
+                {% if api_data.binance_connected %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        تم الاتصال بنجاح في {{ api_data.binance_connected_at|format_date }}
+                    </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    حفظ الإعدادات
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">إرشادات API</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li>قم بتسجيل الدخول إلى حسابك في Binance</li>
+                <li>انتقل إلى إعدادات API</li>
+                <li>قم بإنشاء API جديد</li>
+                <li>قم بتفعيل صلاحيات التداول</li>
+                <li>نسخ API Key و Secret</li>
+                <li>لصق المفاتيح في النموذج أعلاه</li>
+            </ol>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                لا تشارك مفاتيح API مع أي شخص!
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
