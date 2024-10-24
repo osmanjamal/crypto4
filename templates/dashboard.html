@@ -5,249 +5,231 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- شريط الأدوات -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <form id="symbolForm" class="d-flex gap-2">
-                        <select class="form-select" name="symbol" required>
-                            <option value="">اختر العملة</option>
-                            <option value="BTCUSDT">BTC/USDT</option>
-                            <option value="ETHUSDT">ETH/USDT</option>
-                            <option value="BNBUSDT">BNB/USDT</option>
-                            <!-- يمكن إضافة المزيد من العملات -->
+    <!-- نموذج الإشارات -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">إنشاء إشارة جديدة</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="signalForm">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">نوع النص البرمجي</label>
+                        <select class="form-select" name="script_type" required>
+                            <option value="INDICATOR">مؤشر</option>
+                            <option value="STRATEGY">استراتيجية</option>
                         </select>
-                        <input type="number" class="form-control" name="qty" placeholder="الكمية" required>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">الزوج</label>
+                        <input type="text" class="form-control" name="symbol" required>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">الكمية</label>
+                        <input type="number" class="form-control" name="qty" step="0.01" required>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">نوع الإشارة</label>
                         <select class="form-select" name="alert_type" required>
-                            <option value="">نوع التنبيه</option>
                             <option value="BUY">شراء</option>
                             <option value="SELL">بيع</option>
                         </select>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> إضافة
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0">الحد الأقصى للخسارة:</h6>
-                            <h4 class="mb-0" id="maxLossDisplay">
-                                ${{ max_loss_value if max_loss_value else '0.00' }}
-                            </h4>
-                        </div>
-                        <button class="btn btn-danger" onclick="resetMaxLoss()">
-                            <i class="fas fa-redo"></i> إعادة تعيين
-                        </button>
+                    </div>
+
+                    <div class="col-md-1">
+                        <label class="form-label">TP</label>
+                        <input type="number" class="form-control" name="tp_distance" value="0" step="1">
+                    </div>
+
+                    <div class="col-md-1">
+                        <label class="form-label">SL</label>
+                        <input type="number" class="form-control" name="sl_distance" value="0" step="1">
                     </div>
                 </div>
-            </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>إنشاء
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- القسم الرئيسي -->
-    <div class="row g-4">
-        <!-- بطاقات الإحصائيات -->
-        <div class="col-md-4">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h6 class="card-title">إجمالي التداولات</h6>
-                    <h2 class="card-text" id="totalTradesCount">0</h2>
-                    <small>اليوم</small>
-                </div>
-            </div>
+    <!-- عرض الصيغة -->
+    {% if syntax %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">صيغة الإشارة</h5>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h6 class="card-title">الصفقات الرابحة</h6>
-                    <h2 class="card-text" id="profitableTradesCount">0</h2>
-                    <small>نسبة النجاح: <span id="successRate">0%</span></small>
-                </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h6>نسخ النص البرمجي التالي:</h6>
+                <pre class="mt-2 p-3 bg-light rounded">{{ syntax | safe }}</pre>
             </div>
+            <button class="btn btn-secondary btn-sm" onclick="copyToClipboard()">
+                <i class="fas fa-copy me-2"></i>نسخ
+            </button>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h6 class="card-title">الإشارات النشطة</h6>
-                    <h2 class="card-text" id="activeSignalsCount">0</h2>
-                    <small>قيد التنفيذ</small>
-                </div>
-            </div>
-        </div>
+    </div>
+    {% endif %}
 
-        <!-- المخطط البياني -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">أداء التداول</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-outline-secondary active" data-period="day">يوم</button>
-                        <button class="btn btn-outline-secondary" data-period="week">أسبوع</button>
-                        <button class="btn btn-outline-secondary" data-period="month">شهر</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="tradingChart" height="300"></canvas>
-                </div>
-            </div>
+    <!-- آخر الإشارات -->
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">آخر الإشارات</h5>
+            <a href="{{ url_for('signals') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-external-link-alt me-2"></i>عرض الكل
+            </a>
         </div>
-
-        <!-- آخر الإشارات -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">آخر الإشارات</h5>
-                </div>
-                <div class="list-group list-group-flush" id="recentSignals">
-                    <!-- سيتم تحديثه بواسطة JavaScript -->
-                </div>
-            </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الزوج</th>
+                        <th>النوع</th>
+                        <th>السعر</th>
+                        <th>الكمية</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody id="recentSignals">
+                    <!-- سيتم تحديثه عبر JavaScript -->
+                </tbody>
+            </table>
         </div>
+    </div>
 
-        <!-- جدول التداولات -->
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">آخر التداولات</h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>الوقت</th>
-                                <th>العملة</th>
-                                <th>النوع</th>
-                                <th>السعر</th>
-                                <th>الكمية</th>
-                                <th>القيمة</th>
-                                <th>الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentTrades">
-                            <!-- سيتم تحديثه بواسطة JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <!-- آخر التداولات -->
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">آخر التداولات</h5>
+            <a href="{{ url_for('trades') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-external-link-alt me-2"></i>عرض الكل
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الزوج</th>
+                        <th>النوع</th>
+                        <th>السعر</th>
+                        <th>الكمية</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody id="recentTrades">
+                    <!-- سيتم تحديثه عبر JavaScript -->
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
-<!-- نافذة syntax -->
-{% if syntax %}
-<div class="modal fade" id="syntaxModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Webhook Syntax</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <pre class="bg-light p-3 rounded">{{ syntax | safe }}</pre>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // إعداد المخطط البياني
-    const ctx = document.getElementById('tradingChart').getContext('2d');
-    const tradingChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'الأداء',
-                data: [],
-                borderColor: '#2962ff',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
+    // نسخ النص إلى الحافظة
+    function copyToClipboard() {
+        const syntax = `{{ syntax | safe if syntax else '' }}`;
+        navigator.clipboard.writeText(syntax.replace(/<\/?br>/g, '\n'))
+            .then(() => {
+                showAlert('تم النسخ بنجاح', 'success');
+            })
+            .catch(() => {
+                showAlert('فشل النسخ', 'error');
+            });
+    }
+
+    // تحديث البيانات كل 30 ثانية
+    setInterval(updateDashboard, 30000);
 
     // تحديث البيانات
     async function updateDashboard() {
         try {
-            const response = await fetch('/api/dashboard/data');
-            const data = await response.json();
-            
-            // تحديث الإحصائيات
-            updateStats(data.stats);
-            
-            // تحديث المخطط
-            updateChart(data.chart_data);
-            
             // تحديث الإشارات
-            updateSignals(data.recent_signals);
-            
+            const signalsResponse = await fetch('/api/signals/recent');
+            const signals = await signalsResponse.json();
+            updateSignalsTable(signals);
+
             // تحديث التداولات
-            updateTrades(data.recent_trades);
-            
+            const tradesResponse = await fetch('/api/trades/recent');
+            const trades = await tradesResponse.json();
+            updateTradesTable(trades);
+
         } catch (error) {
             console.error('Error updating dashboard:', error);
         }
     }
 
-    // تحديث كل 30 ثانية
-    setInterval(updateDashboard, 30000);
+    // تحديث جدول الإشارات
+    function updateSignalsTable(signals) {
+        const tbody = document.getElementById('recentSignals');
+        if (!tbody) return;
 
-    // معالجة نموذج الإشارات
-    document.getElementById('symbolForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        try {
-            const response = await fetch("{{ url_for('index') }}", {
-                method: 'POST',
-                body: new FormData(this)
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                showAlert('تم إضافة الإشارة بنجاح', 'success');
-                this.reset();
-            } else {
-                showAlert(result.message, 'danger');
-            }
-        } catch (error) {
-            showAlert('حدث خطأ أثناء إضافة الإشارة', 'danger');
-        }
-    });
-
-    // إعادة تعيين الحد الأقصى للخسارة
-    async function resetMaxLoss() {
-        if (!confirm('هل أنت متأكد من إعادة تعيين الحد الأقصى للخسارة؟')) {
-            return;
-        }
-        
-        try {
-            await fetch("{{ url_for('reset_max_loss') }}", { method: 'POST' });
-            document.getElementById('maxLossDisplay').textContent = '$0.00';
-            showAlert('تم إعادة تعيين الحد الأقصى للخسارة', 'success');
-        } catch (error) {
-            showAlert('حدث خطأ أثناء إعادة التعيين', 'danger');
-        }
+        tbody.innerHTML = signals.map(signal => `
+            <tr>
+                <td>${formatDate(signal.time)}</td>
+                <td>${signal.symbol}</td>
+                <td>
+                    <span class="badge bg-${signal.type === 'buy' ? 'success' : 'danger'}">
+                        ${signal.type === 'buy' ? 'شراء' : 'بيع'}
+                    </span>
+                </td>
+                <td>${signal.price}</td>
+                <td>${signal.quantity}</td>
+                <td>
+                    <span class="badge bg-${getStatusBadge(signal.status)}">
+                        ${signal.status}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
     }
 
-    // عرض نافذة syntax
-    {% if syntax %}
-    new bootstrap.Modal(document.getElementById('syntaxModal')).show();
-    {% endif %}
+    // تحديث جدول التداولات
+    function updateTradesTable(trades) {
+        const tbody = document.getElementById('recentTrades');
+        if (!tbody) return;
 
-    // التحديث الأولي
+        tbody.innerHTML = trades.map(trade => `
+            <tr>
+                <td>${formatDate(trade.time)}</td>
+                <td>${trade.symbol}</td>
+                <td>
+                    <span class="badge bg-${trade.type === 'buy' ? 'success' : 'danger'}">
+                        ${trade.type === 'buy' ? 'شراء' : 'بيع'}
+                    </span>
+                </td>
+                <td>${trade.price}</td>
+                <td>${trade.quantity}</td>
+                <td>
+                    <span class="badge bg-${getStatusBadge(trade.status)}">
+                        ${trade.status}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // الحصول على لون الحالة
+    function getStatusBadge(status) {
+        const badges = {
+            'active': 'warning',
+            'completed': 'success',
+            'cancelled': 'danger',
+            'pending': 'info'
+        };
+        return badges[status] || 'secondary';
+    }
+
+    // تحديث أولي
     updateDashboard();
 </script>
 {% endblock %}

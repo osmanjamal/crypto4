@@ -1,0 +1,188 @@
+<!-- templates/trades.html -->
+{% extends "base.html" %}
+
+{% block title %}التداولات - منصة التداول{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- بطاقات الإحصائيات -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">إجمالي التداولات</h6>
+                    <h2 class="card-text" id="totalTrades">0</h2>
+                    <small>تداول</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">التداولات الناجحة</h6>
+                    <h2 class="card-text" id="successfulTrades">0</h2>
+                    <small>تداول</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">التداولات المفتوحة</h6>
+                    <h2 class="card-text" id="openTrades">0</h2>
+                    <small>تداول</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">نسبة النجاح</h6>
+                    <h2 class="card-text" id="successRate">0%</h2>
+                    <small>معدل النجاح</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول التداولات -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">سجل التداولات</h5>
+            <div class="d-flex gap-2">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" placeholder="بحث..." id="searchInput">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <button class="btn btn-primary btn-sm" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i> تحديث
+                </button>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            {% if tables %}
+                {% for table in tables %}
+                    <div class="trade-table">
+                        {{ table | safe }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">لا توجد تداولات</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ترقيم الصفحات -->
+        {% if tables %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">السابق</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">التالي</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تحديث الإحصائيات
+    async function updateStats() {
+        try {
+            const response = await fetch('/api/trades/stats');
+            const stats = await response.json();
+            
+            document.getElementById('totalTrades').textContent = stats.total || 0;
+            document.getElementById('successfulTrades').textContent = stats.successful || 0;
+            document.getElementById('openTrades').textContent = stats.open || 0;
+            document.getElementById('successRate').textContent = `${stats.success_rate || 0}%`;
+        } catch (error) {
+            console.error('Error updating stats:', error);
+        }
+    }
+
+    // تحديث الجدول
+    function updateTable() {
+        location.reload();
+    }
+
+    // البحث في الجدول
+    document.getElementById('searchInput')?.addEventListener('keyup', function(e) {
+        const searchText = e.target.value.toLowerCase();
+        const table = document.querySelector('table');
+        if (!table) return;
+
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+
+    // زر التحديث
+    document.getElementById('refreshBtn')?.addEventListener('click', updateTable);
+
+    // تحديث تلقائي كل دقيقة
+    setInterval(updateStats, 60000);
+
+    // تنسيق الجدول
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحسين جدول البيانات
+        const table = document.querySelector('.data');
+        if (table) {
+            table.classList.add('table', 'table-hover', 'mb-0');
+            
+            // تحسين العناوين
+            const headers = table.querySelectorAll('th');
+            headers.forEach(header => {
+                header.style.backgroundColor = '#f8f9fa';
+                header.style.fontWeight = '600';
+            });
+
+            // تحسين الخلايا
+            const cells = table.querySelectorAll('td');
+            cells.forEach(cell => {
+                // تنسيق التاريخ
+                if (cell.textContent.includes('202')) {
+                    cell.textContent = new Date(cell.textContent).toLocaleString('ar-SA');
+                }
+                
+                // تنسيق الأرقام
+                if (!isNaN(cell.textContent) && cell.textContent.includes('.')) {
+                    cell.textContent = parseFloat(cell.textContent).toFixed(8);
+                }
+                
+                // تنسيق نوع التداول
+                if (cell.textContent.toLowerCase().includes('buy')) {
+                    cell.innerHTML = '<span class="badge bg-success">شراء</span>';
+                } else if (cell.textContent.toLowerCase().includes('sell')) {
+                    cell.innerHTML = '<span class="badge bg-danger">بيع</span>';
+                }
+            });
+        }
+    });
+
+    // التحديث الأولي
+    updateStats();
+</script>
+{% endblock %}

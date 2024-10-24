@@ -1,5 +1,5 @@
 import json
-from flask import Flask, request, render_template, redirect, url_for,flash
+from flask import Flask, render_template, request, redirect, url_for, flash
 import os
 import importlib
 import concurrent.futures as cf
@@ -8,6 +8,8 @@ import config
 import time as t
 from flask import Flask, request, render_template, redirect, url_for,flash
 import pandas as pd
+from functions import *
+
 #import MetaTrader5 as mt5  # تغيير طريقة الاستيراد
 
 
@@ -460,17 +462,15 @@ def place_order(action,symbol,volume,price,tp,sl):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = ''
-
     if request.method == 'POST':
         if request.form.get('username') != config.admin_username or \
-                request.form.get('password') != config.admin_password:
+           request.form.get('password') != config.admin_password:
             error = 'Invalid Credentials. Please try again.'
-            flash(format('Invalid credentials. Please try again.'), 'error')
+            flash('Invalid credentials. Please try again.', 'error')
         else:
-            #auth_data = request.form.to_dict(flat=True)
             write('auth.txt', 'authenticated')
             write('ip_address.txt', ip_address())
-            return redirect(url_for('index'))
+            return redirect(url_for('dashboard'))
     return render_template('login.html', error=error)
 
 @app.route('/logout', methods=['POST', 'GET'])
@@ -487,7 +487,7 @@ def main():
     if auth_session != 'authenticated' or ip_session != ip_add:
         return redirect(url_for('login'))
     else:
-        return redirect(url_for('dashboard'))  # تغيير من index إلى dashboard
+        return redirect(url_for('dashboard'))
     
 @app.route('/password_reset',methods=['POST'])
 def reset_password():
@@ -517,10 +517,13 @@ def change_password():
     pass
     return render_template('change_password.html')
 
-
+# في main.py
+@app.route('/historical')
+def historical():
+    return render_template('dashboard.html')  # مؤقتاً نوجه إلى dashboard
 
 @app.route('/dashboard', methods=['GET', 'POST'])
-def dashboard():  # تغيير اسم الدالة من index إلى dashboard وإزالة async
+def dashboard():
     auth_session = read('auth.txt')
     ip_session = str(read('ip_address.txt'))
     ip_add = ip_address()
@@ -528,8 +531,6 @@ def dashboard():  # تغيير اسم الدالة من index إلى dashboard �
     if auth_session != 'authenticated' or ip_session != ip_add:
         return redirect(url_for('login'))
 
-    syntax = None  # تعريف syntax في البداية
-    
     if request.method == 'POST':
         script_type = request.form.get('script_type', "")
         quantity = request.form.get('qty', "")
@@ -538,6 +539,7 @@ def dashboard():  # تغيير اسم الدالة من index إلى dashboard �
         tp_i = request.form.get('tp_distance', "0")
         sl_i = request.form.get('sl_distance', "0")
 
+        syntax = None
         if script_type == 'INDICATOR':
             if alert_type == 'BUY':
                 syntax = (
@@ -569,68 +571,71 @@ def dashboard():  # تغيير اسم الدالة من index إلى dashboard �
                 '</br>"sl": "' + sl_i + '",'
                 '</br>"price": "{{close}}"</br>}'
             )
-    return render_template('dashboard.html', syntax=syntax)
+        
+        return render_template('dashboard.html', syntax=syntax)
+    
+    return render_template('dashboard.html')
 
 @app.route('/signals', methods=['GET', 'POST'])
 def signals():
-  auth_session = read('auth.txt')
-  ip_session = str(read('ip_address.txt'))
-  ip_add = ip_address()
-    
-  if auth_session != 'authenticated' or ip_session != ip_add:
-    return redirect(url_for('login'))
-  with open('signals.json', 'r') as f:
-    trade_data = json.load(f)
-    df = pd.DataFrame(
-      trade_data,
-      columns=['order_time', 'symbol', 'action', 'entry', 'qty', 'qty_type'])
-    df.rename(columns={
-      'order_time': 'TIME',
-      'symbol': 'SYMBOL',
-      'action': 'SIDE',
-      'qty': 'QTY',
-      'entry': 'ENTRY',
-      # 'tp': 'TP',
-      # 'sl': 'SL',
-      'qty_type': 'ACCOUNT'
-    },
-              inplace=True)
-    df = df.sort_values(by="TIME", ascending=False)
-    #print(df)
+    auth_session = read('auth.txt')
+    ip_session = str(read('ip_address.txt'))
+    ip_add = ip_address()
 
-  return render_template('signals.html',
+    if auth_session != 'authenticated' or ip_session != ip_add:
+        return redirect(url_for('login'))
+
+    with open('signals.json', 'r') as f:
+        trade_data = json.load(f)
+        df = pd.DataFrame(
+            trade_data,
+            columns=['order_time', 'symbol', 'action', 'entry', 'qty', 'qty_type']
+        )
+        df.rename(columns={
+            'order_time': 'TIME',
+            'symbol': 'SYMBOL',
+            'action': 'SIDE',
+            'qty': 'QTY',
+            'entry': 'ENTRY',
+            'qty_type': 'ACCOUNT'
+        }, inplace=True)
+        df = df.sort_values(by="TIME", ascending=False)
+
+    return render_template('signals.html',
                          tables=[df.to_html(classes='data')],
                          titles=df.columns.values)
 
 
 @app.route('/trades', methods=['GET', 'POST'])
-async def trades():
-  auth_session = read('auth.txt')
-  ip_session = str(read('ip_address.txt'))
-  ip_add = ip_address()
+def trades():
+    auth_session = read('auth.txt')
+    ip_session = str(read('ip_address.txt'))
+    ip_add = ip_address()
 
-  if auth_session != 'authenticated' or ip_session != ip_add:
-    return redirect(url_for('login'))
-  with open('trades.json', 'r') as f:
-    trade_data = json.load(f)
-    df = pd.DataFrame(
-      trade_data,
-      columns=['order_time', 'order_id', 'symbol', 'action', 'price', 'qty'])
-    df.rename(columns={
-      'order_time': 'TIME',
-      'order_id': 'ORDER ID',
-      'symbol': 'SYMBOL',
-      'action': 'SIDE',
-      'qty': 'QTY',
-      'price': 'PRICE'
-    },
-              inplace=True)
-    df = df.sort_values(by="TIME", ascending=False)
-    #print(df)
+    if auth_session != 'authenticated' or ip_session != ip_add:
+        return redirect(url_for('login'))
 
-  return render_template('trades.html',
+    with open('trades.json', 'r') as f:
+        trade_data = json.load(f)
+        df = pd.DataFrame(
+            trade_data,
+            columns=['order_time', 'order_id', 'symbol', 'action', 'price', 'qty']
+        )
+        df.rename(columns={
+            'order_time': 'TIME',
+            'order_id': 'ORDER ID',
+            'symbol': 'SYMBOL',
+            'action': 'SIDE',
+            'qty': 'QTY',
+            'price': 'PRICE'
+        }, inplace=True)
+        df = df.sort_values(by="TIME", ascending=False)
+
+    return render_template('trades.html',
                          tables=[df.to_html(classes='data')],
                          titles=df.columns.values)
+
+
 
 @app.route('/max_loss_settings', methods=['GET', 'POST'])
 def max_loss_settings():
@@ -747,6 +752,5 @@ def add_api_telegram(account_number):
     return redirect(url_for('api_settings'))
 
 
-if __name__ == "__main__":
-
-    app.run(host="0.0.0.0", port=80, debug=True, threaded=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80, debug=True)

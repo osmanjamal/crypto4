@@ -1,52 +1,240 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Signal Logs</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<!-- templates/signals.html -->
+{% extends "base.html" %}
 
-</head>
-<body>
-   <center>
-      <ul class="navbar">
-        <li><a href="/">Home</a></li>
-        <li><a class="active" href="/signals">Signal Logs</a></li>
-        <li><a href="http://95.179.246.255:3000/" target="_blank">Open MT5</a></li>
-        <!--<li><a href="/max_loss_settings">Risk Settings</a></li>-->
-        <!--<li><a href="/api_settings">Add / Edit API</a></li>-->
-        <div style="display: flex; justify-content: flex-end;">
-          <li><a class="logout" href="/logout" >Logout</a></li>
+{% block title %}الإشارات - منصة التداول{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- بطاقات الإحصائيات -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">إجمالي الإشارات</h6>
+                    <h2 class="card-text" id="totalSignals">0</h2>
+                    <small>إشارة</small>
+                </div>
+            </div>
         </div>
-      </ul>
-    </center>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">الإشارات الناجحة</h6>
+                    <h2 class="card-text" id="successfulSignals">0</h2>
+                    <small>إشارة</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">الإشارات النشطة</h6>
+                    <h2 class="card-text" id="activeSignals">0</h2>
+                    <small>إشارة</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">نسبة النجاح</h6>
+                    <h2 class="card-text" id="successRate">0%</h2>
+                    <small>معدل النجاح</small>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- أدوات التصفية -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">الزوج</label>
+                    <select class="form-select" id="symbolFilter">
+                        <option value="">الكل</option>
+                        <!-- سيتم تحديثه بواسطة JavaScript -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">نوع الإشارة</label>
+                    <select class="form-select" id="typeFilter">
+                        <option value="">الكل</option>
+                        <option value="BUY">شراء</option>
+                        <option value="SELL">بيع</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">الحالة</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">الكل</option>
+                        <option value="active">نشطة</option>
+                        <option value="completed">مكتملة</option>
+                        <option value="cancelled">ملغاة</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">بحث</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="بحث...">
+                        <button class="btn btn-outline-secondary" type="button" id="refreshBtn">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="trans-box-header ">
-   
-   <center><h1>Webhook Signal Logs</h1></center>
-   </div>
-   <div class="trans-box-body-dashboard" style="background-color: rgba(0, 0, 0, 0.253);">
-      <style>
-         table {
-           width: 100%;
-           border-collapse: collapse;
-         }
-     
-         th, td {
-           padding: 8px;
-           text-align: left;
-           border-bottom: 1px solid #ffffff2f;
-         }
-     
-         th {
-           background-color: #00000044;
-         }
-       </style>
-   {% for table in tables %}
-   {{ table|safe }}
-   {% endfor %}
-   
-   
-   </div>
-</body>
-</html>
+    <!-- جدول الإشارات -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">سجل الإشارات</h5>
+        </div>
+        
+        <div class="table-responsive">
+            {% if tables %}
+                {% for table in tables %}
+                    <div class="signal-table">
+                        {{ table | safe }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">لا توجد إشارات</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ترقيم الصفحات -->
+        {% if tables %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">السابق</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">التالي</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تحديث الإحصائيات
+    async function updateStats() {
+        try {
+            const response = await fetch('/api/signals/stats');
+            const stats = await response.json();
+            
+            document.getElementById('totalSignals').textContent = stats.total || 0;
+            document.getElementById('successfulSignals').textContent = stats.successful || 0;
+            document.getElementById('activeSignals').textContent = stats.active || 0;
+            document.getElementById('successRate').textContent = `${stats.success_rate || 0}%`;
+
+            // تحديث قائمة الأزواج
+            if (stats.symbols) {
+                const symbolSelect = document.getElementById('symbolFilter');
+                symbolSelect.innerHTML = `
+                    <option value="">الكل</option>
+                    ${stats.symbols.map(symbol => `
+                        <option value="${symbol}">${symbol}</option>
+                    `).join('')}
+                `;
+            }
+        } catch (error) {
+            console.error('Error updating stats:', error);
+        }
+    }
+
+    // تطبيق الفلتر
+    function applyFilters() {
+        const symbol = document.getElementById('symbolFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const search = document.getElementById('searchInput').value;
+
+        const table = document.querySelector('table');
+        if (!table) return;
+
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const rowSymbol = row.cells[1]?.textContent || '';
+            const rowType = row.cells[2]?.textContent || '';
+            const rowStatus = row.cells[5]?.textContent || '';
+            const rowText = row.textContent.toLowerCase();
+
+            const matchSymbol = !symbol || rowSymbol.includes(symbol);
+            const matchType = !type || rowType.includes(type);
+            const matchStatus = !status || rowStatus.includes(status);
+            const matchSearch = !search || rowText.includes(search.toLowerCase());
+
+            row.style.display = (matchSymbol && matchType && matchStatus && matchSearch) ? '' : 'none';
+        });
+    }
+
+    // إضافة مستمعي الأحداث
+    document.getElementById('symbolFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('typeFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('searchInput')?.addEventListener('keyup', applyFilters);
+    document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
+
+    // تحسين الجدول
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.querySelector('.data');
+        if (table) {
+            table.classList.add('table', 'table-hover', 'mb-0');
+            
+            // تحسين العناوين
+            const headers = table.querySelectorAll('th');
+            headers.forEach(header => {
+                header.style.backgroundColor = '#f8f9fa';
+                header.style.fontWeight = '600';
+            });
+
+            // تحسين الخلايا
+            const cells = table.querySelectorAll('td');
+            cells.forEach(cell => {
+                // تنسيق التاريخ
+                if (cell.textContent.includes('202')) {
+                    cell.textContent = new Date(cell.textContent).toLocaleString('ar-SA');
+                }
+                
+                // تنسيق نوع الإشارة
+                if (cell.textContent.toLowerCase() === 'buy') {
+                    cell.innerHTML = '<span class="badge bg-success">شراء</span>';
+                } else if (cell.textContent.toLowerCase() === 'sell') {
+                    cell.innerHTML = '<span class="badge bg-danger">بيع</span>';
+                }
+
+                // تنسيق الأرقام
+                if (!isNaN(cell.textContent) && cell.textContent.includes('.')) {
+                    cell.textContent = parseFloat(cell.textContent).toFixed(8);
+                }
+            });
+        }
+    });
+
+    // تحديث تلقائي كل دقيقة
+    setInterval(updateStats, 60000);
+
+    // التحديث الأولي
+    updateStats();
+</script>
+{% endblock %}

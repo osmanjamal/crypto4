@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, redirect, url_for,flash
 import json
-from main import mt5
+#from main import mt5
 import datetime
 
 def ip_address():
