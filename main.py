@@ -331,7 +331,7 @@ def get_position_data(action,symbol):
     pos_price, identifier, volume = 0.0, 1, 0.0
     positions=mt5.positions_get(symbol=symbol)
     # print(positions)
-    if positions == None:
+    if positions is None:
         print(f'No positions on {symbol}')
     elif len(positions) > 0:
         # print(f'Total positions on {symbol} =',len(positions))
@@ -352,7 +352,7 @@ def close_positions_by_symbol(action,symbol):
         pos_price, identifier, volume = 0.0, 1, 0.0
         positions=mt5.positions_get(symbol=symbol)
         print(positions)
-        if positions == None:
+        if positions is None:
             print(f'No positions on {symbol}')
         elif len(positions) > 0:
             print(f'Total positions on {symbol} =',len(positions))
